@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "back-propagation"
+version = "1.0.0"
+description = ""
+authors = ["Priyanka Perera <pcperera@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+numpy = "*"
+pandas = "*"
+python = "~3.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -36,18 +36,18 @@ class NeuralNetwork:
         self.__hidden1_size = 100
         self.__hidden2_size = 40
         self.__output_size = 4
-        self.__epsilon = 1e-10
+        self.__epsilon = 1e-10  # For mathematical stability
 
         # Initialize training parameters
         self.__learning_rate = learning_rate
         self.__num_epochs = num_epochs
 
         # Initialize weights and biases
-        self.__input_hidden1_weights = np.random.randn(self.__input_size, self.__hidden1_size)
+        self.__input_to_hidden1_weights = np.random.randn(self.__input_size, self.__hidden1_size)
         self.__hidden1_bias = np.zeros(shape=(1, self.__hidden1_size), dtype=int)
-        self.__hidden1_hidden2_weights = np.random.randn(self.__hidden1_size, self.__hidden2_size)
+        self.__hidden1_to_hidden2_weights = np.random.randn(self.__hidden1_size, self.__hidden2_size)
         self.__hidden_2_bias = np.zeros(shape=(1, self.__hidden2_size), dtype=int)
-        self.__hidden2_output_weights = np.random.randn(self.__hidden2_size, self.__output_size)
+        self.__hidden2_to_output_weights = np.random.randn(self.__hidden2_size, self.__output_size)
         self.__output_bias = np.zeros(shape=(1, self.__output_size), dtype=int)
 
         # Initializes loss array
@@ -60,21 +60,18 @@ class NeuralNetwork:
 
     def __forward(self, x: []):
         # Forward propagation
-        hidden1_input = np.dot(x, self.__input_hidden1_weights) + self.__hidden1_bias
+        hidden1_input = np.dot(x, self.__input_to_hidden1_weights) + self.__hidden1_bias
         hidden1_output = relu(hidden1_input)
-        hidden2_input = np.dot(hidden1_output, self.__hidden1_hidden2_weights) + self.__hidden_2_bias
+        hidden2_input = np.dot(hidden1_output, self.__hidden1_to_hidden2_weights) + self.__hidden_2_bias
         hidden2_output = relu(hidden2_input)
-        output_input = np.dot(hidden2_output, self.__hidden2_output_weights) + self.__output_bias
+        output_input = np.dot(hidden2_output, self.__hidden2_to_output_weights) + self.__output_bias
         output = softmax(output_input)
-        output = np.clip(output, self.__epsilon, 1 - self.__epsilon)
         return hidden1_input, hidden1_output, hidden2_input, hidden2_output, output
 
     def __get_cross_entropy_loss(self, x: [], y: [], output):
-        # One-hot-encode
+        # One-hot-encode and calculate loss using cross-entropy loss
         one_hot_labels = one_hot_encode(y)  # Convert Y to one-hot vectors
-
-        # Calculate loss using cross-entropy loss
-        cross_entropy_loss = -np.sum(one_hot_labels * np.log(output)) / len(x)
+        cross_entropy_loss = -np.sum(one_hot_labels * np.log(output + self.__epsilon)) / len(x)
         return cross_entropy_loss, one_hot_labels
 
     def train(self):
@@ -85,9 +82,9 @@ class NeuralNetwork:
 
             # Backpropagation
             output_error = output - training_one_hot_labels
-            hidden2_error = np.dot(output_error, self.__hidden2_output_weights.T)
+            hidden2_error = np.dot(output_error, self.__hidden2_to_output_weights.T)
             hidden2_error[hidden2_input <= 0] = 0
-            hidden1_error = np.dot(hidden2_error, self.__hidden1_hidden2_weights.T)
+            hidden1_error = np.dot(hidden2_error, self.__hidden1_to_hidden2_weights.T)
             hidden1_error[hidden1_input <= 0] = 0
 
             # Compute gradients
@@ -99,11 +96,11 @@ class NeuralNetwork:
             grad_bias_hidden1 = np.sum(hidden1_error, axis=0, keepdims=True)
 
             # Update weights and biases
-            self.__input_hidden1_weights = self.__input_hidden1_weights - self.__learning_rate * grad_weights_input_hidden1
+            self.__input_to_hidden1_weights = self.__input_to_hidden1_weights - self.__learning_rate * grad_weights_input_hidden1
             self.__hidden1_bias = self.__hidden1_bias - self.__learning_rate * grad_bias_hidden1
-            self.__hidden1_hidden2_weights = self.__hidden1_hidden2_weights - self.__learning_rate * grad_weights_hidden1_hidden2
+            self.__hidden1_to_hidden2_weights = self.__hidden1_to_hidden2_weights - self.__learning_rate * grad_weights_hidden1_hidden2
             self.__hidden_2_bias = self.__hidden_2_bias - self.__learning_rate * grad_bias_hidden2
-            self.__hidden2_output_weights = self.__hidden2_output_weights - self.__learning_rate * grad_weights_hidden2_output
+            self.__hidden2_to_output_weights = self.__hidden2_to_output_weights - self.__learning_rate * grad_weights_hidden2_output
             self.__output_bias = self.__output_bias - self.__learning_rate * grad_bias_output
 
             # Training data metrics

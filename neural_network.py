@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 
 
 class NeuralNetwork:
+    """
+    Architecture: layer0 (input) --> layer1 --> layer2 --> layer3 (output)
+    """
 
     def __init__(self, x_train: [],  y_train: [], x_test: [], y_test: [], learning_rate=0.1, num_epochs=5000):
         # Initialize data
@@ -13,8 +16,8 @@ class NeuralNetwork:
 
         # Neural network architecture
         self.__input_size = 14
-        self.__hidden1_size = 100
-        self.__hidden2_size = 40
+        self.__layer1_size = 100
+        self.__layer2_size = 40
         self.__output_size = 4
         self.__epsilon = 1e-10  # For mathematical stability
 
@@ -23,11 +26,11 @@ class NeuralNetwork:
         self.__num_epochs = num_epochs
 
         # Initialize weights and biases
-        self.__input_to_hidden1_weights = np.random.randn(self.__input_size, self.__hidden1_size)
-        self.__hidden1_bias = np.zeros(shape=(1, self.__hidden1_size), dtype=int)
-        self.__hidden1_to_hidden2_weights = np.random.randn(self.__hidden1_size, self.__hidden2_size)
-        self.__hidden_2_bias = np.zeros(shape=(1, self.__hidden2_size), dtype=int)
-        self.__hidden2_to_output_weights = np.random.randn(self.__hidden2_size, self.__output_size)
+        self.__layer0_to_layer1_weights = np.random.randn(self.__input_size, self.__layer1_size)
+        self.__layer1_bias = np.zeros(shape=(1, self.__layer1_size), dtype=int)
+        self.__layer1_to_layer2_weights = np.random.randn(self.__layer1_size, self.__layer2_size)
+        self.__layer_2_bias = np.zeros(shape=(1, self.__layer2_size), dtype=int)
+        self.__layer2_to_layer3_weights = np.random.randn(self.__layer2_size, self.__output_size)
         self.__output_bias = np.zeros(shape=(1, self.__output_size), dtype=int)
 
         # Initializes loss array
@@ -40,13 +43,13 @@ class NeuralNetwork:
 
     def __forward(self, x: []):
         # Forward propagation
-        hidden1_input = np.dot(x, self.__input_to_hidden1_weights) + self.__hidden1_bias
-        hidden1_output = self.__relu(hidden1_input)
-        hidden2_input = np.dot(hidden1_output, self.__hidden1_to_hidden2_weights) + self.__hidden_2_bias
-        hidden2_output = self.__relu(hidden2_input)
-        output_input = np.dot(hidden2_output, self.__hidden2_to_output_weights) + self.__output_bias
+        layer1_input = np.dot(x, self.__layer0_to_layer1_weights) + self.__layer1_bias
+        layer1_output = self.__relu(layer1_input)
+        layer2_input = np.dot(layer1_output, self.__layer1_to_layer2_weights) + self.__layer_2_bias
+        layer2_output = self.__relu(layer2_input)
+        output_input = np.dot(layer2_output, self.__layer2_to_layer3_weights) + self.__output_bias
         output = self.__softmax(output_input)
-        return hidden1_input, hidden1_output, hidden2_input, hidden2_output, output
+        return layer1_input, layer1_output, layer2_input, layer2_output, output
 
     def __get_cross_entropy_loss(self, x: [], y: [], output):
         # One-hot-encode and calculate loss using cross-entropy loss
@@ -56,31 +59,31 @@ class NeuralNetwork:
 
     def train(self):
         for epoch in range(1, self.__num_epochs + 1):
-            hidden1_input, hidden1_output, hidden2_input, hidden2_output, output = self.__forward(x=self.__x_train)
+            layer1_input, layer1_output, layer2_input, layer2_output, output = self.__forward(x=self.__x_train)
             training_cross_entropy_loss, training_one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_train, y=self.__y_train, output=output)
             self.__training_losses.append(training_cross_entropy_loss)
 
             # Backpropagation
             output_error = output - training_one_hot_labels
-            hidden2_error = np.dot(output_error, self.__hidden2_to_output_weights.T)
-            hidden2_error[hidden2_input <= 0] = 0
-            hidden1_error = np.dot(hidden2_error, self.__hidden1_to_hidden2_weights.T)
-            hidden1_error[hidden1_input <= 0] = 0
+            layer2_error = np.dot(output_error, self.__layer2_to_layer3_weights.T)
+            layer2_error[layer2_input <= 0] = 0
+            layer1_error = np.dot(layer2_error, self.__layer1_to_layer2_weights.T)
+            layer1_error[layer1_input <= 0] = 0
 
             # Compute gradients
-            grad_weights_hidden2_output = np.dot(hidden2_output.T, output_error)
+            grad_weights_layer2_output = np.dot(layer2_output.T, output_error)
             grad_bias_output = np.sum(output_error, axis=0, keepdims=True)
-            grad_weights_hidden1_hidden2 = np.dot(hidden1_output.T, hidden2_error)
-            grad_bias_hidden2 = np.sum(hidden2_error, axis=0, keepdims=True)
-            grad_weights_input_hidden1 = np.dot(self.__x_train.T, hidden1_error)
-            grad_bias_hidden1 = np.sum(hidden1_error, axis=0, keepdims=True)
+            grad_weights_layer1_layer2 = np.dot(layer1_output.T, layer2_error)
+            grad_bias_layer2 = np.sum(layer2_error, axis=0, keepdims=True)
+            grad_weights_input_layer1 = np.dot(self.__x_train.T, layer1_error)
+            grad_bias_layer1 = np.sum(layer1_error, axis=0, keepdims=True)
 
             # Update weights and biases
-            self.__input_to_hidden1_weights = self.__input_to_hidden1_weights - self.__learning_rate * grad_weights_input_hidden1
-            self.__hidden1_bias = self.__hidden1_bias - self.__learning_rate * grad_bias_hidden1
-            self.__hidden1_to_hidden2_weights = self.__hidden1_to_hidden2_weights - self.__learning_rate * grad_weights_hidden1_hidden2
-            self.__hidden_2_bias = self.__hidden_2_bias - self.__learning_rate * grad_bias_hidden2
-            self.__hidden2_to_output_weights = self.__hidden2_to_output_weights - self.__learning_rate * grad_weights_hidden2_output
+            self.__layer0_to_layer1_weights = self.__layer0_to_layer1_weights - self.__learning_rate * grad_weights_input_layer1
+            self.__layer1_bias = self.__layer1_bias - self.__learning_rate * grad_bias_layer1
+            self.__layer1_to_layer2_weights = self.__layer1_to_layer2_weights - self.__learning_rate * grad_weights_layer1_layer2
+            self.__layer_2_bias = self.__layer_2_bias - self.__learning_rate * grad_bias_layer2
+            self.__layer2_to_layer3_weights = self.__layer2_to_layer3_weights - self.__learning_rate * grad_weights_layer2_output
             self.__output_bias = self.__output_bias - self.__learning_rate * grad_bias_output
 
             # Training data metrics

@@ -34,7 +34,7 @@ class NeuralNetwork:
         self.__layer1_to_layer2_weights = np.random.randn(self.__layer1_size, self.__layer2_size)
         self.__layer_2_bias = np.zeros(shape=(1, self.__layer2_size), dtype=int)
         self.__layer2_to_layer3_weights = np.random.randn(self.__layer2_size, self.__output_size)
-        self.__output_bias = np.zeros(shape=(1, self.__output_size), dtype=int)
+        self.__layer3_bias = np.zeros(shape=(1, self.__output_size), dtype=int)
 
         # Initializes loss array
         self.__training_losses = []
@@ -50,7 +50,7 @@ class NeuralNetwork:
         layer1_output = self.__relu(layer1_input)
         layer2_input = np.dot(layer1_output, self.__layer1_to_layer2_weights) + self.__layer_2_bias
         layer2_output = self.__relu(layer2_input)
-        layer3_input = np.dot(layer2_output, self.__layer2_to_layer3_weights) + self.__output_bias
+        layer3_input = np.dot(layer2_output, self.__layer2_to_layer3_weights) + self.__layer3_bias
         layer3_output = self.__softmax(layer3_input)
         return layer1_input, layer1_output, layer2_input, layer2_output, layer3_output
 
@@ -67,27 +67,27 @@ class NeuralNetwork:
             self.__training_losses.append(training_cross_entropy_loss)
 
             # Backpropagation
-            output_error = training_output - training_one_hot_labels
-            layer2_error = np.dot(output_error, self.__layer2_to_layer3_weights.T)
+            training_output_error = training_output - training_one_hot_labels
+            layer2_error = np.dot(training_output_error, self.__layer2_to_layer3_weights.T)
             layer2_error[layer2_input <= 0] = 0
             layer1_error = np.dot(layer2_error, self.__layer1_to_layer2_weights.T)
             layer1_error[layer1_input <= 0] = 0
 
             # Compute gradients
-            grad_weights_layer2_output = np.dot(layer2_output.T, output_error)
-            grad_bias_output = np.sum(output_error, axis=0, keepdims=True)
-            grad_weights_layer1_layer2 = np.dot(layer1_output.T, layer2_error)
-            grad_bias_layer2 = np.sum(layer2_error, axis=0, keepdims=True)
-            grad_weights_input_layer1 = np.dot(self.__x_train.T, layer1_error)
-            grad_bias_layer1 = np.sum(layer1_error, axis=0, keepdims=True)
+            gradient_weights_layer2_to_layer3 = np.dot(layer2_output.T, training_output_error)
+            gradient_bias_layer3 = np.sum(training_output_error, axis=0, keepdims=True)
+            gradient_weights_layer1_to_layer2 = np.dot(layer1_output.T, layer2_error)
+            gradient_bias_layer2 = np.sum(layer2_error, axis=0, keepdims=True)
+            gradient_weights_layer0_to_layer1 = np.dot(self.__x_train.T, layer1_error)
+            gradient_bias_layer1 = np.sum(layer1_error, axis=0, keepdims=True)
 
             # Update weights and biases
-            self.__layer0_to_layer1_weights = self.__layer0_to_layer1_weights - self.__learning_rate * grad_weights_input_layer1
-            self.__layer1_bias = self.__layer1_bias - self.__learning_rate * grad_bias_layer1
-            self.__layer1_to_layer2_weights = self.__layer1_to_layer2_weights - self.__learning_rate * grad_weights_layer1_layer2
-            self.__layer_2_bias = self.__layer_2_bias - self.__learning_rate * grad_bias_layer2
-            self.__layer2_to_layer3_weights = self.__layer2_to_layer3_weights - self.__learning_rate * grad_weights_layer2_output
-            self.__output_bias = self.__output_bias - self.__learning_rate * grad_bias_output
+            self.__layer0_to_layer1_weights = self.__layer0_to_layer1_weights - self.__learning_rate * gradient_weights_layer0_to_layer1
+            self.__layer1_bias = self.__layer1_bias - self.__learning_rate * gradient_bias_layer1
+            self.__layer1_to_layer2_weights = self.__layer1_to_layer2_weights - self.__learning_rate * gradient_weights_layer1_to_layer2
+            self.__layer_2_bias = self.__layer_2_bias - self.__learning_rate * gradient_bias_layer2
+            self.__layer2_to_layer3_weights = self.__layer2_to_layer3_weights - self.__learning_rate * gradient_weights_layer2_to_layer3
+            self.__layer3_bias = self.__layer3_bias - self.__learning_rate * gradient_bias_layer3
 
             # Training data metrics
             training_predictions = np.argmax(training_output, axis=1)  # Predicted classes for training data

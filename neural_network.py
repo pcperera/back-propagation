@@ -1,12 +1,5 @@
 import numpy as np
 
-# Neural network architecture
-input_size = 14
-hidden1_size = 100
-hidden2_size = 40
-output_size = 4
-
-
 num_classes = 4
 
 
@@ -39,18 +32,23 @@ class NeuralNetwork:
         self.__learning_rate = learning_rate
         self.__num_epochs = num_epochs
 
+        # Neural network architecture
+        self.__input_size = 14
+        self.__hidden1_size = 100
+        self.__hidden2_size = 40
+        self.__output_size = 4
+
         # Initialize weights and biases
-        self.__input_hidden1_weights = np.random.randn(input_size, hidden1_size)
-        self.__hidden1_bias = np.zeros((1, hidden1_size))
-        self.__hidden1_hidden2_weights = np.random.randn(hidden1_size, hidden2_size)
-        self.__hidden_2_bias = np.zeros((1, hidden2_size))
-        self.__hidden2_output_weights = np.random.randn(hidden2_size, output_size)
-        self.__output_bias = np.zeros((1, output_size))
+        self.__input_hidden1_weights = np.random.randn(self.__input_size, self.__hidden1_size)
+        self.__hidden1_bias = np.zeros((1, self.__hidden1_size))
+        self.__hidden1_hidden2_weights = np.random.randn(self.__hidden1_size, self.__hidden2_size)
+        self.__hidden_2_bias = np.zeros((1, self.__hidden2_size))
+        self.__hidden2_output_weights = np.random.randn(self.__hidden2_size, self.__output_size)
+        self.__output_bias = np.zeros((1, self.__output_size))
 
     def train(self):
         for epoch in range(self.__num_epochs):
             # Forward propagation
-            print(f"Epoch {epoch}")
             hidden1_input = np.dot(self.__x_train, self.__input_hidden1_weights) + self.__hidden1_bias
             hidden1_output = relu(hidden1_input)
             hidden2_input = np.dot(hidden1_output, self.__hidden1_hidden2_weights) + self.__hidden_2_bias

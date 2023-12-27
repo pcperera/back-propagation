@@ -49,7 +49,7 @@ class NeuralNetwork:
         self.__output_bias = np.zeros(shape=(1, self.__output_size), dtype=int)
 
         # Initializes loss array
-        self.__cross_entropy_losses = []
+        self.__training_losses = []
 
     def train(self):
         for epoch in range(1, self.__num_epochs + 1):
@@ -67,7 +67,7 @@ class NeuralNetwork:
 
             # Calculate loss using cross-entropy loss
             cross_entropy_loss = -np.sum(one_hot_labels * np.log(output)) / len(self.__x_train)
-            self.__cross_entropy_losses.append(cross_entropy_loss)
+            self.__training_losses.append(cross_entropy_loss)
 
             # Backpropagation
             output_error = output - one_hot_labels
@@ -96,12 +96,12 @@ class NeuralNetwork:
             if epoch % 100 == 0:
                 print(f"Epoch {epoch}, Cross Entropy Loss: {cross_entropy_loss}")
 
-    def plot(self):
-        plt.plot(range(self.__num_epochs), self.__cross_entropy_losses, label="Training Loss")
+    def plot_train_loss(self):
+        plt.plot(range(self.__num_epochs), self.__training_losses, label="Cross Entropy Training Loss")
         plt.xlabel("Epochs")
         plt.ylabel("Cross Entropy Loss")
-        plt.title("Training Loss over Epochs")
+        plt.title(f"Training Loss over Epochs (Learning Rate: {self.__learning_rate})")
         plt.legend()
-        plt.figure(figsize=(10, 6))
-        plt.savefig(f"learning-rate-{self.__learning_rate}.png")  # Adjust the filename and format as needed
+        # plt.figure(figsize=(6, 4))
+        plt.savefig(f"training-loss-for-learning-rate-{self.__learning_rate}.png")  # Adjust the filename and format as needed
         plt.close()

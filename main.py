@@ -15,5 +15,4 @@ if __name__ == "__main__":
         print(f"Training neural network with learning rate: {learning_rate}, number of epochs: {num_epochs}")
         nn = NeuralNetwork(x_train=x_train.values, y_train=y_train.values, x_test=x_test.values, y_test=y_test.values, learning_rate=learning_rate, num_epochs=num_epochs)
         nn.train()
-        nn.plot_train_loss()
-        nn.test()
+        nn.plot()

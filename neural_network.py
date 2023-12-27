@@ -52,6 +52,11 @@ class NeuralNetwork:
 
         # Initializes loss array
         self.__training_losses = []
+        self.__testing_losses = []
+
+        # Initialize accuracy array
+        self.__training_accuracies = []
+        self.__testing_accuracies = []
 
     def __forward(self, x: []):
         # Forward propagation
@@ -75,12 +80,11 @@ class NeuralNetwork:
     def train(self):
         for epoch in range(1, self.__num_epochs + 1):
             hidden1_input, hidden1_output, hidden2_input, hidden2_output, output = self.__forward(x=self.__x_train)
-            cross_entropy_loss, one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_train, y=self.__y_train, output=output)
-
-            self.__training_losses.append(cross_entropy_loss)
+            training_cross_entropy_loss, training_one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_train, y=self.__y_train, output=output)
+            self.__training_losses.append(training_cross_entropy_loss)
 
             # Backpropagation
-            output_error = output - one_hot_labels
+            output_error = output - training_one_hot_labels
             hidden2_error = np.dot(output_error, self.__hidden2_output_weights.T)
             hidden2_error[hidden2_input <= 0] = 0
             hidden1_error = np.dot(hidden2_error, self.__hidden1_hidden2_weights.T)
@@ -102,31 +106,46 @@ class NeuralNetwork:
             self.__hidden2_output_weights = self.__hidden2_output_weights - self.__learning_rate * grad_weights_hidden2_output
             self.__output_bias = self.__output_bias - self.__learning_rate * grad_bias_output
 
-            train_predictions = np.argmax(output, axis=1)  # Predicted classes for training data
-            train_true_labels = np.argmax(one_hot_labels, axis=1)  # True classes for training data
-            training_accuracy = np.mean(train_predictions == train_true_labels)  # Training accuracy
+            # Training data metrics
+            training_predictions = np.argmax(output, axis=1)  # Predicted classes for training data
+            training_true_labels = np.argmax(training_one_hot_labels, axis=1)  # True classes for training data
+            training_accuracy = np.mean(training_predictions == training_true_labels)  # Training accuracy
+            self.__training_accuracies.append(training_accuracy)
+
+            # Testing data metrics
+            _, _, _, _, testing_output = self.__forward(x=self.__x_test)
+            testing_cross_entropy_loss, testing_one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_test, y=self.__y_test, output=testing_output)
+            self.__testing_losses.append(testing_cross_entropy_loss)
+            testing_predictions = np.argmax(testing_output, axis=1)  # Predicted classes for testing data
+            testing_true_labels = np.argmax(testing_one_hot_labels, axis=1)  # True classes for testing data
+        
+            # Calculate testing accuracy
+            test_accuracy = np.mean(testing_predictions == testing_true_labels)
+            self.__testing_accuracies.append(test_accuracy)
 
             if epoch % 100 == 0:
-                print(f"Epoch {epoch}, Training Cross Entropy Loss: {cross_entropy_loss}, Training Accuracy: {training_accuracy}")
+                print(f"Epoch {epoch}, Training Cross Entropy Loss: {training_cross_entropy_loss}, Training Accuracy: {training_accuracy}")
+                print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {test_accuracy}")
 
-    def test(self):
-        _, _, _, _, output = self.__forward(x=self.__x_test)
+    def plot(self):
+        y_label = "Cross Entropy Loss"
+        training_mode = "Training"
+        testing_mode = "Testing"
+        self.__plot_internal(mode=training_mode, y=self.__training_losses, y_label=y_label)
+        self.__plot_internal(mode=testing_mode, y=self.__testing_losses, y_label=y_label)
 
-        # Calculate the testing loss using cross-entropy
-        cross_entropy_loss, one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_test, y=self.__y_test, output=output)
-        test_predictions = np.argmax(output, axis=1)  # Predicted classes for testing data
-        test_true_labels = np.argmax(one_hot_labels, axis=1)  # True classes for testing data
+        y_label = "Accuracy"
+        self.__plot_internal(mode=training_mode, y=self.__training_accuracies, y_label=y_label)
+        self.__plot_internal(mode=testing_mode, y=self.__testing_accuracies, y_label=y_label)
 
-        # Calculate testing accuracy
-        test_accuracy = np.mean(test_predictions == test_true_labels)
-        print(f'Testing Cross Entropy Loss: {cross_entropy_loss}, Testing Accuracy: {test_accuracy}')
-
-    def plot_train_loss(self):
-        plt.plot(range(self.__num_epochs), self.__training_losses, label="Cross Entropy Training Loss")
+    def __plot_internal(self, mode: str, y, y_label: str):
+        plt.plot(range(self.__num_epochs), y, label=f"{mode} {y_label}")
         plt.xlabel("Epoch")
-        plt.ylabel("Cross Entropy Loss")
-        plt.title(f"Training Loss over Epochs (Learning Rate: {self.__learning_rate})")
+        plt.ylabel(y_label)
+        plt.title(f"{mode} {y_label} over Epochs (Learning Rate: {self.__learning_rate})")
         plt.legend()
         # plt.figure(figsize=(6, 4))
-        plt.savefig(f"training-loss-for-learning-rate-{self.__learning_rate}.png")  # Adjust the filename and format as needed
+        file_name = f"{mode} {y_label} for learning rate {self.__learning_rate}.png"
+        file_name = file_name.replace(" ", "_").lower()
+        plt.savefig(file_name)
         plt.close()

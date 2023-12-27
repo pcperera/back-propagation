@@ -139,13 +139,13 @@ class NeuralNetwork:
         self.__plot_internal(mode=testing_mode, y=self.__testing_accuracies, y_label=y_label)
 
     def __plot_internal(self, mode: str, y, y_label: str):
+        plt.figure(figsize=(20, 8))
         plt.plot(range(self.__num_epochs), y, label=f"{mode} {y_label}")
         plt.xlabel("Epoch")
         plt.ylabel(y_label)
         plt.title(f"{mode} {y_label} over Epochs (Learning Rate: {self.__learning_rate})")
         plt.legend()
-        # plt.figure(figsize=(6, 4))
-        file_name = f"{mode} {y_label} for learning rate {self.__learning_rate}.png"
+        file_name = f"lr {self.__learning_rate} {mode} {y_label}.png"
         file_name = file_name.replace(" ", "_").lower()
         plt.savefig(file_name)
         plt.close()

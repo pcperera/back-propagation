@@ -6,6 +6,7 @@ authors = ["Priyanka Perera <pcperera@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
+matplotlib = "*"
 numpy = "*"
 pandas = "*"
 python = "~3.6"

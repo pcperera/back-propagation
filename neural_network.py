@@ -50,24 +50,24 @@ class NeuralNetwork:
         layer1_output = self.__relu(layer1_input)
         layer2_input = np.dot(layer1_output, self.__layer1_to_layer2_weights) + self.__layer_2_bias
         layer2_output = self.__relu(layer2_input)
-        output_input = np.dot(layer2_output, self.__layer2_to_layer3_weights) + self.__output_bias
-        output = self.__softmax(output_input)
-        return layer1_input, layer1_output, layer2_input, layer2_output, output
+        layer3_input = np.dot(layer2_output, self.__layer2_to_layer3_weights) + self.__output_bias
+        layer3_output = self.__softmax(layer3_input)
+        return layer1_input, layer1_output, layer2_input, layer2_output, layer3_output
 
-    def __get_cross_entropy_loss(self, x: [], y: [], output):
+    def __get_cross_entropy_loss(self, x: [], y: [], network_output):
         # One-hot-encode and calculate loss using cross-entropy loss
         one_hot_labels = self.one_hot_encode(self.__output_size, y)  # Convert Y to one-hot vectors
-        cross_entropy_loss = -np.sum(one_hot_labels * np.log(output + self.__epsilon)) / len(x)
+        cross_entropy_loss = -np.sum(one_hot_labels * np.log(network_output + self.__epsilon)) / len(x)
         return cross_entropy_loss, one_hot_labels
 
     def train(self):
         for epoch in range(1, self.__num_epochs + 1):
-            layer1_input, layer1_output, layer2_input, layer2_output, output = self.__forward(x=self.__x_train)
-            training_cross_entropy_loss, training_one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_train, y=self.__y_train, output=output)
+            layer1_input, layer1_output, layer2_input, layer2_output, training_output = self.__forward(x=self.__x_train)
+            training_cross_entropy_loss, training_one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_train, y=self.__y_train, network_output=training_output)
             self.__training_losses.append(training_cross_entropy_loss)
 
             # Backpropagation
-            output_error = output - training_one_hot_labels
+            output_error = training_output - training_one_hot_labels
             layer2_error = np.dot(output_error, self.__layer2_to_layer3_weights.T)
             layer2_error[layer2_input <= 0] = 0
             layer1_error = np.dot(layer2_error, self.__layer1_to_layer2_weights.T)
@@ -90,25 +90,25 @@ class NeuralNetwork:
             self.__output_bias = self.__output_bias - self.__learning_rate * grad_bias_output
 
             # Training data metrics
-            training_predictions = np.argmax(output, axis=1)  # Predicted classes for training data
+            training_predictions = np.argmax(training_output, axis=1)  # Predicted classes for training data
             training_true_labels = np.argmax(training_one_hot_labels, axis=1)  # True classes for training data
             training_accuracy = np.mean(training_predictions == training_true_labels)  # Training accuracy
             self.__training_accuracies.append(training_accuracy)
 
             # Testing data metrics
             _, _, _, _, testing_output = self.__forward(x=self.__x_test)
-            testing_cross_entropy_loss, testing_one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_test, y=self.__y_test, output=testing_output)
+            testing_cross_entropy_loss, testing_one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_test, y=self.__y_test, network_output=testing_output)
             self.__testing_losses.append(testing_cross_entropy_loss)
             testing_predictions = np.argmax(testing_output, axis=1)  # Predicted classes for testing data
             testing_true_labels = np.argmax(testing_one_hot_labels, axis=1)  # True classes for testing data
         
             # Calculate testing accuracy
-            test_accuracy = np.mean(testing_predictions == testing_true_labels)
-            self.__testing_accuracies.append(test_accuracy)
+            testing_accuracy = np.mean(testing_predictions == testing_true_labels)
+            self.__testing_accuracies.append(testing_accuracy)
 
             if epoch % 100 == 0:
                 print(f"Epoch {epoch}, Training Cross Entropy Loss: {training_cross_entropy_loss}, Training Accuracy: {training_accuracy}")
-                print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {test_accuracy}")
+                print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")
 
     def plot(self):
         y_label = "Cross Entropy Loss"

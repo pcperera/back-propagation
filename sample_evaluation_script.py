@@ -3,12 +3,12 @@ import numpy as np
 import csv
 import zipfile
 
-ID = '190123A'
-zip_ref = zipfile.ZipFile(ID+'.zip', 'r')
-zip_ref.extractall('.')
-zip_ref.close()
+# ID = '239171B'
+# zip_ref = zipfile.ZipFile(ID+'.zip', 'r')
+# zip_ref.extractall('.')
+# zip_ref.close()
 
-truth_path = 'the_truth_path' #change truth_path = 'b' for verification
+truth_path = 'Task_1/b'  #change truth_path = 'b' for verification
 file_name = ['Task_1/dw.csv', 'Task_1/db.csv']
 true_file = ['true-dw.csv', 'true-db.csv']
 threshold = 0.05

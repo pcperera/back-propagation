@@ -1,26 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-num_classes = 4
-
-
-# Activation functions
-def relu(x):
-    return np.maximum(0, x)
-
-
-def softmax(x):
-    exps = np.exp(x - np.max(x, axis=1, keepdims=True))
-    return exps / np.sum(exps, axis=1, keepdims=True)
-
-
-def one_hot_encode(labels: []):
-    num_samples = len(labels)
-    one_hot_encoding_labels = np.zeros((num_samples, num_classes), dtype=int)
-    for sample in range(num_samples):
-        one_hot_encoding_labels[sample, labels[sample]] = 1
-    return one_hot_encoding_labels
-
 
 class NeuralNetwork:
 
@@ -61,16 +41,16 @@ class NeuralNetwork:
     def __forward(self, x: []):
         # Forward propagation
         hidden1_input = np.dot(x, self.__input_to_hidden1_weights) + self.__hidden1_bias
-        hidden1_output = relu(hidden1_input)
+        hidden1_output = self.__relu(hidden1_input)
         hidden2_input = np.dot(hidden1_output, self.__hidden1_to_hidden2_weights) + self.__hidden_2_bias
-        hidden2_output = relu(hidden2_input)
+        hidden2_output = self.__relu(hidden2_input)
         output_input = np.dot(hidden2_output, self.__hidden2_to_output_weights) + self.__output_bias
-        output = softmax(output_input)
+        output = self.__softmax(output_input)
         return hidden1_input, hidden1_output, hidden2_input, hidden2_output, output
 
     def __get_cross_entropy_loss(self, x: [], y: [], output):
         # One-hot-encode and calculate loss using cross-entropy loss
-        one_hot_labels = one_hot_encode(y)  # Convert Y to one-hot vectors
+        one_hot_labels = self.one_hot_encode(self.__output_size, y)  # Convert Y to one-hot vectors
         cross_entropy_loss = -np.sum(one_hot_labels * np.log(output + self.__epsilon)) / len(x)
         return cross_entropy_loss, one_hot_labels
 
@@ -146,3 +126,21 @@ class NeuralNetwork:
         file_name = file_name.replace(" ", "_").lower()
         plt.savefig(file_name)
         plt.close()
+
+    # Activation functions
+    @staticmethod
+    def __relu(x):
+        return np.maximum(0, x)
+
+    @staticmethod
+    def __softmax(x):
+        exps = np.exp(x - np.max(x, axis=1, keepdims=True))
+        return exps / np.sum(exps, axis=1, keepdims=True)
+
+    @staticmethod
+    def one_hot_encode(num_classes, labels: []):
+        num_samples = len(labels)
+        one_hot_encoding_labels = np.zeros((num_samples, num_classes), dtype=int)
+        for sample in range(num_samples):
+            one_hot_encoding_labels[sample, labels[sample]] = 1
+        return one_hot_encoding_labels

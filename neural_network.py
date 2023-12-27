@@ -1,6 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Set display precision
+np.set_printoptions(precision=16)
+
 
 class NeuralNetwork:
     """

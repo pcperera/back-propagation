@@ -80,8 +80,8 @@ class NeuralNetwork:
         plt.savefig(file_name)
         plt.close()
 
-    def __run(self, train_mode: bool= True):
-        max_epochs = self.__num_epochs if train_mode else 1
+    def __run(self, training_mode: bool= True):
+        max_epochs = self.__num_epochs if training_mode else 1
 
         for epoch in range(1, max_epochs + 1):
             # Shuffle training data before each epoch
@@ -109,48 +109,49 @@ class NeuralNetwork:
             layer0_to_layer1_derivative_of_weights = np.dot(x_train_shuffled.T, layer1_error)
             layer1_derivative_of_bias = np.sum(layer1_error, axis=0, keepdims=True)
 
-            # Update weights and biases
-            self.__layer0_to_layer1_weights = self.__layer0_to_layer1_weights - (self.__learning_rate * layer0_to_layer1_derivative_of_weights)
-            self.__layer1_bias = self.__layer1_bias - (self.__learning_rate * layer1_derivative_of_bias)
-            self.__layer1_to_layer2_weights = self.__layer1_to_layer2_weights - (self.__learning_rate * layer1_to_layer2_derivative_of_weights)
-            self.__layer2_bias = self.__layer2_bias - (self.__learning_rate * layer2_derivative_of_bias)
-            self.__layer2_to_layer3_weights = self.__layer2_to_layer3_weights - (self.__learning_rate * layer2_to_layer3_derivative_of_weights)
-            self.__layer3_bias = self.__layer3_bias - (self.__learning_rate * layer3_derivative_of_bias)
+            if training_mode:
+                # Update weights and biases
+                self.__layer0_to_layer1_weights = self.__layer0_to_layer1_weights - (self.__learning_rate * layer0_to_layer1_derivative_of_weights)
+                self.__layer1_bias = self.__layer1_bias - (self.__learning_rate * layer1_derivative_of_bias)
+                self.__layer1_to_layer2_weights = self.__layer1_to_layer2_weights - (self.__learning_rate * layer1_to_layer2_derivative_of_weights)
+                self.__layer2_bias = self.__layer2_bias - (self.__learning_rate * layer2_derivative_of_bias)
+                self.__layer2_to_layer3_weights = self.__layer2_to_layer3_weights - (self.__learning_rate * layer2_to_layer3_derivative_of_weights)
+                self.__layer3_bias = self.__layer3_bias - (self.__learning_rate * layer3_derivative_of_bias)
 
-            # Training data metrics
-            training_predictions = decode(layer3_output)  # Predicted classes for training data
-            training_true_labels = decode(y_training_encoded)  # True classes for training data
-            training_accuracy = np.mean(training_predictions == training_true_labels)  # Training accuracy
-            self.__training_accuracies.append(training_accuracy)
+                # Training data metrics
+                training_predictions = decode(layer3_output)  # Predicted classes for training data
+                training_true_labels = decode(y_training_encoded)  # True classes for training data
+                training_accuracy = np.mean(training_predictions == training_true_labels)  # Training accuracy
+                self.__training_accuracies.append(training_accuracy)
 
-            # Testing data metrics
-            is_test_metrics_enabled = self.__x_test is not None and self.__y_test is not None
-            if is_test_metrics_enabled:
-                testing_shuffled_indices = np.random.permutation(len(self.__x_test))
-                x_test_shuffled = self.__x_test[testing_shuffled_indices]
-                y_test_shuffled = self.__y_test[testing_shuffled_indices]
-
-                _, _, _, _, testing_output = self.__forward(x=x_test_shuffled)
-                y_testing_encoded = one_hot_encode(self.__layer3_size, y_test_shuffled)
-                testing_cross_entropy_loss = cross_entropy_loss(x_true=x_test_shuffled, y_true=y_testing_encoded, y_predicted=testing_output, epsilon=self.__epsilon)
-                self.__testing_losses.append(testing_cross_entropy_loss)
-                testing_predictions = decode(testing_output)  # Predicted classes for testing data
-                testing_true_labels = decode(y_testing_encoded)  # True classes for testing data
-
-                # Calculate testing accuracy
-                testing_accuracy = np.mean(testing_predictions == testing_true_labels)
-                self.__testing_accuracies.append(testing_accuracy)
-
-            if epoch % 100 == 0:
-                print(f"Epoch {epoch}, Training Cross Entropy Loss: {training_cross_entropy_loss}, Training Accuracy: {training_accuracy}")
+                # Testing data metrics
+                is_test_metrics_enabled = self.__x_test is not None and self.__y_test is not None
                 if is_test_metrics_enabled:
-                    print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")
+                    testing_shuffled_indices = np.random.permutation(len(self.__x_test))
+                    x_test_shuffled = self.__x_test[testing_shuffled_indices]
+                    y_test_shuffled = self.__y_test[testing_shuffled_indices]
 
-            if (not train_mode) and epoch == self.__num_epochs:
+                    _, _, _, _, testing_output = self.__forward(x=x_test_shuffled)
+                    y_testing_encoded = one_hot_encode(self.__layer3_size, y_test_shuffled)
+                    testing_cross_entropy_loss = cross_entropy_loss(x_true=x_test_shuffled, y_true=y_testing_encoded, y_predicted=testing_output, epsilon=self.__epsilon)
+                    self.__testing_losses.append(testing_cross_entropy_loss)
+                    testing_predictions = decode(testing_output)  # Predicted classes for testing data
+                    testing_true_labels = decode(y_testing_encoded)  # True classes for testing data
+
+                    # Calculate testing accuracy
+                    testing_accuracy = np.mean(testing_predictions == testing_true_labels)
+                    self.__testing_accuracies.append(testing_accuracy)
+
+                if epoch % 100 == 0:
+                    print(f"Epoch {epoch}, Training Cross Entropy Loss: {training_cross_entropy_loss}, Training Accuracy: {training_accuracy}")
+                    if is_test_metrics_enabled:
+                        print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")
+            else:
+                # We are not in training mode. That means we just need to log the derivatives for weights and biases.
                 task_1_directory = "Task_1"
                 os.makedirs(name=task_1_directory, exist_ok=True)
 
-                # Derivative of bias
+                # Derivatives of biases
                 file_name = f"{task_1_directory}/db.csv"
                 print(f"Saving bias derivatives to {file_name}")
                 with open(file_name, 'w') as csv_file:
@@ -159,7 +160,7 @@ class NeuralNetwork:
                     csv_writer.writerows(layer2_derivative_of_bias)
                     csv_writer.writerows(layer3_derivative_of_bias)
 
-                # Derivative of weights
+                # Derivatives of weights
                 file_name = f"{task_1_directory}/dw.csv"
                 print(f"Saving weight derivatives to {file_name}")
                 with open(file_name, 'w') as csv_file:
@@ -169,10 +170,10 @@ class NeuralNetwork:
                     csv_writer.writerows(layer2_to_layer3_derivative_of_weights)
 
     def train(self):
-        self.__run(train_mode=True)
+        self.__run(training_mode=True)
 
     def calculate_derivatives(self):
-        self.__run(train_mode=False)
+        self.__run(training_mode=False)
 
     def plot(self):
         y_label = "Cross Entropy Loss"

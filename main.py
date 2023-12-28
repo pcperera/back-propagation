@@ -14,7 +14,7 @@ def task_1():
     biases.drop(biases.columns[0], axis=1, inplace=True)
     weights = pd.read_csv(f"{data_directory}/w{file_suffix}", header=None)
     weights.drop(weights.columns[0], axis=1, inplace=True)
-    nn = NeuralNetwork(x_train=x_data_point, y_train=y_data_point, x_test=None, y_test=None, weights=weights.values, biases=biases.values, num_epochs=1)
+    nn = NeuralNetwork(x_train=x_data_point, y_train=y_data_point, x_test=None, y_test=None, weights=weights.values, biases=biases.values)
     nn.calculate_derivatives()
 
 

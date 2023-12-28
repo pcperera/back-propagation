@@ -79,7 +79,7 @@ class NeuralNetwork:
         plt.savefig(file_name)
         plt.close()
 
-    def __run(self, training_mode: bool= True):
+    def __run(self, training_mode: bool = True):
         max_epochs = self.__num_epochs if training_mode else 1
 
         for epoch in range(1, max_epochs + 1):
@@ -141,7 +141,7 @@ class NeuralNetwork:
                     testing_accuracy = np.mean(testing_predictions == testing_true_labels)
                     self.__testing_accuracies.append(testing_accuracy)
 
-                if epoch % 100 == 0:
+                if epoch % 250 == 0:
                     print(f"Epoch {epoch}, Training Cross Entropy Loss: {training_cross_entropy_loss}, Training Accuracy: {training_accuracy}")
                     if is_test_metrics_enabled:
                         print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")

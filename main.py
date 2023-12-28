@@ -8,8 +8,8 @@ y_data_point = np.array([3]).reshape(1, -1)
 
 def task_1():
     print("Running Task_1")
-    data_directory = "Task_1_original/a"
-    file_suffix = ".csv"  # "-100-40-4.csv"
+    data_directory = "Task_1_original/b"
+    file_suffix = "-100-40-4.csv"  # ".csv"
     biases = pd.read_csv(f"{data_directory}/b{file_suffix}", header=None)
     biases.drop(biases.columns[0], axis=1, inplace=True)
     weights = pd.read_csv(f"{data_directory}/w{file_suffix}", header=None)
@@ -45,5 +45,5 @@ def task_2():
 
 if __name__ == "__main__":
     task_1()
-    # task_2()
+    task_2()
 

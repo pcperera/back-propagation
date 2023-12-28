@@ -15,7 +15,7 @@ def task_1():
     weights = pd.read_csv(f"{data_directory}/w{file_suffix}", header=None)
     weights.drop(weights.columns[0], axis=1, inplace=True)
     nn = NeuralNetwork(x_train=x_data_point, y_train=y_data_point, x_test=None, y_test=None, weights=weights.values, biases=biases.values, num_epochs=1)
-    nn.train(log_derivatives=True)
+    nn.calculate_derivatives()
 
 
 def task_2():
@@ -34,7 +34,7 @@ def task_2():
     for learning_rate in learning_rates:
         print(f"Training neural network with learning rate: {learning_rate}, number of epochs: {num_epochs}")
         nn = NeuralNetwork(x_train=x_train.values, y_train=y_train.values, x_test=x_test.values, y_test=y_test.values, learning_rate=learning_rate, num_epochs=num_epochs)
-        nn.train(log_derivatives=False)
+        nn.train()
         nn.plot()
 
         # Test using the data point given in data_point.txt.

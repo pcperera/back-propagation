@@ -80,8 +80,10 @@ class NeuralNetwork:
         plt.savefig(file_name)
         plt.close()
 
-    def train(self, log_derivatives: bool = False):
-        for epoch in range(1, self.__num_epochs + 1):
+    def __run(self, train_mode: bool= True):
+        max_epochs = self.__num_epochs if train_mode else 1
+
+        for epoch in range(1, max_epochs + 1):
             # Shuffle training data before each epoch
             training_shuffled_indices = np.random.permutation(len(self.__x_train))
             x_train_shuffled = self.__x_train[training_shuffled_indices]
@@ -144,7 +146,7 @@ class NeuralNetwork:
                 if is_test_metrics_enabled:
                     print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")
 
-            if log_derivatives and epoch == self.__num_epochs:
+            if (not train_mode) and epoch == self.__num_epochs:
                 task_1_directory = "Task_1"
                 os.makedirs(name=task_1_directory, exist_ok=True)
 
@@ -165,6 +167,12 @@ class NeuralNetwork:
                     csv_writer.writerows(layer0_to_layer1_derivative_of_weights)
                     csv_writer.writerows(layer1_to_layer2_derivative_of_weights)
                     csv_writer.writerows(layer2_to_layer3_derivative_of_weights)
+
+    def train(self):
+        self.__run(train_mode=True)
+
+    def calculate_derivatives(self):
+        self.__run(train_mode=False)
 
     def plot(self):
         y_label = "Cross Entropy Loss"

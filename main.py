@@ -8,7 +8,7 @@ y_data_point = np.array([3]).reshape(1, -1)
 
 def task_1():
     print("Running Task_1")
-    data_directory = "Task_1_original/b"
+    data_directory = "Task_1/b"
     file_suffix = "-100-40-4.csv"  # ".csv"
     biases = pd.read_csv(f"{data_directory}/b{file_suffix}", header=None)
     biases.drop(biases.columns[0], axis=1, inplace=True)
@@ -23,7 +23,7 @@ def task_2():
     learning_rates = [1, 0.1, 0.001, 0.0001]
     num_epochs = 2000
 
-    data_directory = "Task_2_data"
+    data_directory = "Task_2"
 
     x_train = pd.read_csv(f"{data_directory}/x_train.csv")
     y_train = pd.read_csv(f"{data_directory}/y_train.csv")

@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from neural_network_utils import relu, softmax, one_hot_encode
 
 # Set display precision
 np.set_printoptions(precision=16)
@@ -18,10 +19,10 @@ class NeuralNetwork:
         self.__y_test = y_test
 
         # Neural network architecture
-        self.__input_size = 14
+        self.__layer0_size = 14  # Input size
         self.__layer1_size = 100
         self.__layer2_size = 40
-        self.__output_size = 4
+        self.__layer3_size = 4  # Output size
         self.__epsilon = 1e-10  # For mathematical stability
 
         # Initialize training parameters
@@ -29,12 +30,12 @@ class NeuralNetwork:
         self.__num_epochs = num_epochs
 
         # Initialize weights and biases
-        self.__layer0_to_layer1_weights = np.random.randn(self.__input_size, self.__layer1_size)
+        self.__layer0_to_layer1_weights = np.random.randn(self.__layer0_size, self.__layer1_size)
         self.__layer1_bias = np.zeros(shape=(1, self.__layer1_size), dtype=int)
         self.__layer1_to_layer2_weights = np.random.randn(self.__layer1_size, self.__layer2_size)
         self.__layer_2_bias = np.zeros(shape=(1, self.__layer2_size), dtype=int)
-        self.__layer2_to_layer3_weights = np.random.randn(self.__layer2_size, self.__output_size)
-        self.__layer3_bias = np.zeros(shape=(1, self.__output_size), dtype=int)
+        self.__layer2_to_layer3_weights = np.random.randn(self.__layer2_size, self.__layer3_size)
+        self.__layer3_bias = np.zeros(shape=(1, self.__layer3_size), dtype=int)
 
         # Initializes loss array
         self.__training_losses = []
@@ -47,23 +48,35 @@ class NeuralNetwork:
     def __forward(self, x: []):
         # Forward propagation
         layer1_input = np.dot(x, self.__layer0_to_layer1_weights) + self.__layer1_bias
-        layer1_output = self.__relu(layer1_input)
+        layer1_output = relu(layer1_input)
         layer2_input = np.dot(layer1_output, self.__layer1_to_layer2_weights) + self.__layer_2_bias
-        layer2_output = self.__relu(layer2_input)
+        layer2_output = relu(layer2_input)
         layer3_input = np.dot(layer2_output, self.__layer2_to_layer3_weights) + self.__layer3_bias
-        layer3_output = self.__softmax(layer3_input)
+        layer3_output = softmax(layer3_input)
         return layer1_input, layer1_output, layer2_input, layer2_output, layer3_output
 
-    def __get_cross_entropy_loss(self, x: [], y: [], network_output):
+    def __cross_entropy_loss(self, x: [], y: [], network_output):
         # One-hot-encode and calculate loss using cross-entropy loss
-        one_hot_labels = self.one_hot_encode(self.__output_size, y)  # Convert Y to one-hot vectors
+        one_hot_labels = one_hot_encode(self.__layer3_size, y)  # Convert Y to one-hot vectors
         cross_entropy_loss = -np.sum(one_hot_labels * np.log(network_output + self.__epsilon)) / len(x)
         return cross_entropy_loss, one_hot_labels
+
+    def __plot_internal(self, mode: str, y, y_label: str):
+        plt.figure(figsize=(20, 8))
+        plt.plot(range(self.__num_epochs), y, label=f"{mode} {y_label}")
+        plt.xlabel("Epoch")
+        plt.ylabel(y_label)
+        plt.title(f"{mode} {y_label} over Epochs (Learning Rate: {self.__learning_rate})")
+        plt.legend()
+        file_name = f"lr {self.__learning_rate} {mode} {y_label}.png"
+        file_name = file_name.replace(" ", "_").lower()
+        plt.savefig(file_name)
+        plt.close()
 
     def train(self):
         for epoch in range(1, self.__num_epochs + 1):
             layer1_input, layer1_output, layer2_input, layer2_output, training_output = self.__forward(x=self.__x_train)
-            training_cross_entropy_loss, training_one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_train, y=self.__y_train, network_output=training_output)
+            training_cross_entropy_loss, training_one_hot_labels = self.__cross_entropy_loss(x=self.__x_train, y=self.__y_train, network_output=training_output)
             self.__training_losses.append(training_cross_entropy_loss)
 
             # Backpropagation
@@ -97,7 +110,7 @@ class NeuralNetwork:
 
             # Testing data metrics
             _, _, _, _, testing_output = self.__forward(x=self.__x_test)
-            testing_cross_entropy_loss, testing_one_hot_labels = self.__get_cross_entropy_loss(x=self.__x_test, y=self.__y_test, network_output=testing_output)
+            testing_cross_entropy_loss, testing_one_hot_labels = self.__cross_entropy_loss(x=self.__x_test, y=self.__y_test, network_output=testing_output)
             self.__testing_losses.append(testing_cross_entropy_loss)
             testing_predictions = np.argmax(testing_output, axis=1)  # Predicted classes for testing data
             testing_true_labels = np.argmax(testing_one_hot_labels, axis=1)  # True classes for testing data
@@ -120,33 +133,3 @@ class NeuralNetwork:
         y_label = "Accuracy"
         self.__plot_internal(mode=training_mode, y=self.__training_accuracies, y_label=y_label)
         self.__plot_internal(mode=testing_mode, y=self.__testing_accuracies, y_label=y_label)
-
-    def __plot_internal(self, mode: str, y, y_label: str):
-        plt.figure(figsize=(20, 8))
-        plt.plot(range(self.__num_epochs), y, label=f"{mode} {y_label}")
-        plt.xlabel("Epoch")
-        plt.ylabel(y_label)
-        plt.title(f"{mode} {y_label} over Epochs (Learning Rate: {self.__learning_rate})")
-        plt.legend()
-        file_name = f"lr {self.__learning_rate} {mode} {y_label}.png"
-        file_name = file_name.replace(" ", "_").lower()
-        plt.savefig(file_name)
-        plt.close()
-
-    # Activation functions
-    @staticmethod
-    def __relu(x):
-        return np.maximum(0, x)
-
-    @staticmethod
-    def __softmax(x):
-        exps = np.exp(x - np.max(x, axis=1, keepdims=True))
-        return exps / np.sum(exps, axis=1, keepdims=True)
-
-    @staticmethod
-    def one_hot_encode(num_classes, labels: []):
-        num_samples = len(labels)
-        one_hot_encoding_labels = np.zeros((num_samples, num_classes), dtype=int)
-        for sample in range(num_samples):
-            one_hot_encoding_labels[sample, labels[sample]] = 1
-        return one_hot_encoding_labels

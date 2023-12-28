@@ -8,7 +8,7 @@ ID = '239171B'
 # zip_ref.extractall('.')
 # zip_ref.close()
 
-truth_path = 'Task_1/b'  #change truth_path = 'b' for verification
+truth_path = 'Task_1_original/b'  #change truth_path = 'b' for verification
 file_name = ['Task_1/dw.csv', 'Task_1/db.csv']
 true_file = ['true-dw.csv', 'true-db.csv']
 threshold = 0.05

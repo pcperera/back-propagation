@@ -5,11 +5,13 @@ learning_rates = [1, 0.1, 0.001]
 num_epochs = 1000
 
 if __name__ == "__main__":
-    x_train = pd.read_csv("Task_2/x_train.csv")
-    y_train = pd.read_csv("Task_2/y_train.csv")
+    data_directory = "Task_2_data"
 
-    x_test = pd.read_csv("Task_2/x_test.csv")
-    y_test = pd.read_csv("Task_2/y_test.csv")
+    x_train = pd.read_csv(f"{data_directory}/x_train.csv")
+    y_train = pd.read_csv(f"{data_directory}/y_train.csv")
+
+    x_test = pd.read_csv(f"{data_directory}/x_test.csv")
+    y_test = pd.read_csv(f"{data_directory}/y_test.csv")
 
     for learning_rate in learning_rates:
         print(f"Training neural network with learning rate: {learning_rate}, number of epochs: {num_epochs}")

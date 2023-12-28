@@ -1,5 +1,7 @@
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from neural_network_utils import relu, softmax, one_hot_encode
 
 # Set display precision
@@ -31,11 +33,11 @@ class NeuralNetwork:
 
         # Initialize weights and biases
         self.__layer0_to_layer1_weights = np.random.randn(self.__layer0_size, self.__layer1_size)
-        self.__layer1_bias = np.zeros(shape=(1, self.__layer1_size), dtype=int)
+        self.__layer1_bias = np.zeros(shape=(1, self.__layer1_size))
         self.__layer1_to_layer2_weights = np.random.randn(self.__layer1_size, self.__layer2_size)
-        self.__layer_2_bias = np.zeros(shape=(1, self.__layer2_size), dtype=int)
+        self.__layer2_bias = np.zeros(shape=(1, self.__layer2_size))
         self.__layer2_to_layer3_weights = np.random.randn(self.__layer2_size, self.__layer3_size)
-        self.__layer3_bias = np.zeros(shape=(1, self.__layer3_size), dtype=int)
+        self.__layer3_bias = np.zeros(shape=(1, self.__layer3_size))
 
         # Initializes loss array
         self.__training_losses = []
@@ -49,7 +51,7 @@ class NeuralNetwork:
         # Forward propagation
         layer1_input = np.dot(x, self.__layer0_to_layer1_weights) + self.__layer1_bias
         layer1_output = relu(layer1_input)
-        layer2_input = np.dot(layer1_output, self.__layer1_to_layer2_weights) + self.__layer_2_bias
+        layer2_input = np.dot(layer1_output, self.__layer1_to_layer2_weights) + self.__layer2_bias
         layer2_output = relu(layer2_input)
         layer3_input = np.dot(layer2_output, self.__layer2_to_layer3_weights) + self.__layer3_bias
         layer3_output = softmax(layer3_input)
@@ -86,21 +88,21 @@ class NeuralNetwork:
             layer1_error = np.dot(layer2_error, self.__layer1_to_layer2_weights.T)
             layer1_error[layer1_input <= 0] = 0
 
-            # Compute gradients
-            gradient_weights_layer2_to_layer3 = np.dot(layer2_output.T, training_output_error)
-            gradient_bias_layer3 = np.sum(training_output_error, axis=0, keepdims=True)
-            gradient_weights_layer1_to_layer2 = np.dot(layer1_output.T, layer2_error)
-            gradient_bias_layer2 = np.sum(layer2_error, axis=0, keepdims=True)
-            gradient_weights_layer0_to_layer1 = np.dot(self.__x_train.T, layer1_error)
-            gradient_bias_layer1 = np.sum(layer1_error, axis=0, keepdims=True)
+            # Compute derivatives (gradients)
+            layer2_to_layer3_derivative_of_weights = np.dot(layer2_output.T, training_output_error)
+            layer3_derivative_of_bias = np.sum(training_output_error, axis=0, keepdims=True)
+            layer1_to_layer2_derivative_of_weights = np.dot(layer1_output.T, layer2_error)
+            layer2_derivative_of_bias = np.sum(layer2_error, axis=0, keepdims=True)
+            layer0_to_layer1_derivative_of_weights = np.dot(self.__x_train.T, layer1_error)
+            layer1_derivative_of_bias = np.sum(layer1_error, axis=0, keepdims=True)
 
             # Update weights and biases
-            self.__layer0_to_layer1_weights = self.__layer0_to_layer1_weights - self.__learning_rate * gradient_weights_layer0_to_layer1
-            self.__layer1_bias = self.__layer1_bias - self.__learning_rate * gradient_bias_layer1
-            self.__layer1_to_layer2_weights = self.__layer1_to_layer2_weights - self.__learning_rate * gradient_weights_layer1_to_layer2
-            self.__layer_2_bias = self.__layer_2_bias - self.__learning_rate * gradient_bias_layer2
-            self.__layer2_to_layer3_weights = self.__layer2_to_layer3_weights - self.__learning_rate * gradient_weights_layer2_to_layer3
-            self.__layer3_bias = self.__layer3_bias - self.__learning_rate * gradient_bias_layer3
+            self.__layer0_to_layer1_weights = self.__layer0_to_layer1_weights - self.__learning_rate * layer0_to_layer1_derivative_of_weights
+            self.__layer1_bias = self.__layer1_bias - self.__learning_rate * layer1_derivative_of_bias
+            self.__layer1_to_layer2_weights = self.__layer1_to_layer2_weights - self.__learning_rate * layer1_to_layer2_derivative_of_weights
+            self.__layer2_bias = self.__layer2_bias - self.__learning_rate * layer2_derivative_of_bias
+            self.__layer2_to_layer3_weights = self.__layer2_to_layer3_weights - self.__learning_rate * layer2_to_layer3_derivative_of_weights
+            self.__layer3_bias = self.__layer3_bias - self.__learning_rate * layer3_derivative_of_bias
 
             # Training data metrics
             training_predictions = np.argmax(training_output, axis=1)  # Predicted classes for training data
@@ -122,6 +124,37 @@ class NeuralNetwork:
             if epoch % 100 == 0:
                 print(f"Epoch {epoch}, Training Cross Entropy Loss: {training_cross_entropy_loss}, Training Accuracy: {training_accuracy}")
                 print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")
+
+            if epoch == self.__num_epochs:
+                task_1_directory = "Task_1"
+                os.makedirs(name=task_1_directory, exist_ok=True)
+                # Bias
+                with open(f"{task_1_directory}/b.csv", 'w') as csv_file:
+                    csv_writer = csv.writer(csv_file)
+                    csv_writer.writerows(self.__layer1_bias)
+                    csv_writer.writerows(self.__layer2_bias)
+                    csv_writer.writerows(self.__layer3_bias)
+
+                # Derivative of bias
+                with open(f"{task_1_directory}/db.csv", 'w') as csv_file:
+                    csv_writer = csv.writer(csv_file)
+                    csv_writer.writerows(layer1_derivative_of_bias)
+                    csv_writer.writerows(layer2_derivative_of_bias)
+                    csv_writer.writerows(layer3_derivative_of_bias)
+
+                # Weights
+                with open(f"{task_1_directory}/w.csv", 'w') as csv_file:
+                    csv_writer = csv.writer(csv_file)
+                    csv_writer.writerows(self.__layer0_to_layer1_weights)
+                    csv_writer.writerows(self.__layer1_to_layer2_weights)
+                    csv_writer.writerows(self.__layer2_to_layer3_weights)
+
+                # Derivative of weights
+                with open(f"{task_1_directory}/dw.csv", 'w') as csv_file:
+                    csv_writer = csv.writer(csv_file)
+                    csv_writer.writerows(layer0_to_layer1_derivative_of_weights)
+                    csv_writer.writerows(layer1_to_layer2_derivative_of_weights)
+                    csv_writer.writerows(layer2_to_layer3_derivative_of_weights)
 
     def plot(self):
         y_label = "Cross Entropy Loss"

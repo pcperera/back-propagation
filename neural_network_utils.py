@@ -11,7 +11,8 @@ def relu(x):
 
 def softmax(x):
     exponentials = np.exp(x - np.max(x, axis=1, keepdims=True))
-    return exponentials / np.sum(exponentials, axis=1, keepdims=True)
+    softmax_output = exponentials / np.sum(exponentials, axis=1, keepdims=True)
+    return one_hot_encode(num_classes=4, labels=np.argmax(softmax_output, axis=1))
 
 
 def one_hot_encode(num_classes, labels: []):
@@ -20,3 +21,7 @@ def one_hot_encode(num_classes, labels: []):
     for sample in range(num_samples):
         one_hot_encoding_labels[sample, labels[sample]] = 1
     return one_hot_encoding_labels
+
+
+def decode(output):
+    return np.argmax(output, axis=1)

@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from neural_network_utils import relu, softmax, one_hot_encode
+from neural_network_utils import relu, softmax, one_hot_encode, decode
 
 # Set display precision
 np.set_printoptions(precision=16)
@@ -25,7 +25,7 @@ class NeuralNetwork:
         self.__layer1_size = 100
         self.__layer2_size = 40
         self.__layer3_size = 4  # Output size
-        self.__epsilon = 1e-10  # For mathematical stability
+        self.__epsilon = 1e-64  # For mathematical stability
 
         # Initialize training parameters
         self.__learning_rate = learning_rate
@@ -57,10 +57,10 @@ class NeuralNetwork:
         layer3_output = softmax(layer3_input)
         return layer1_input, layer1_output, layer2_input, layer2_output, layer3_output
 
-    def __cross_entropy_loss(self, x: [], y: [], network_output):
+    def __cross_entropy_loss(self, x_true: [], y_true: [], network_output):
         # One-hot-encode and calculate loss using cross-entropy loss
-        one_hot_labels = one_hot_encode(self.__layer3_size, y)  # Convert Y to one-hot vectors
-        cross_entropy_loss = -np.sum(one_hot_labels * np.log(network_output + self.__epsilon)) / len(x)
+        one_hot_labels = one_hot_encode(self.__layer3_size, y_true)  # Convert Y to one-hot vectors
+        cross_entropy_loss = -np.sum(one_hot_labels * np.log(network_output + self.__epsilon)) / len(x_true)
         return cross_entropy_loss, one_hot_labels
 
     def __plot_internal(self, mode: str, y, y_label: str):
@@ -77,45 +77,45 @@ class NeuralNetwork:
 
     def train(self):
         for epoch in range(1, self.__num_epochs + 1):
-            layer1_input, layer1_output, layer2_input, layer2_output, training_output = self.__forward(x=self.__x_train)
-            training_cross_entropy_loss, training_one_hot_labels = self.__cross_entropy_loss(x=self.__x_train, y=self.__y_train, network_output=training_output)
+            layer1_input, layer1_output, layer2_input, layer2_output, layer3_output = self.__forward(x=self.__x_train)
+            training_cross_entropy_loss, training_one_hot_labels = self.__cross_entropy_loss(x_true=self.__x_train, y_true=self.__y_train, network_output=layer3_output)
             self.__training_losses.append(training_cross_entropy_loss)
 
             # Backpropagation
-            training_output_error = training_output - training_one_hot_labels
-            layer2_error = np.dot(training_output_error, self.__layer2_to_layer3_weights.T)
+            layer3_error = layer3_output - training_one_hot_labels
+            layer2_error = np.dot(layer3_error, self.__layer2_to_layer3_weights.T)
             layer2_error[layer2_input <= 0] = 0
             layer1_error = np.dot(layer2_error, self.__layer1_to_layer2_weights.T)
             layer1_error[layer1_input <= 0] = 0
 
             # Compute derivatives (gradients)
-            layer2_to_layer3_derivative_of_weights = np.dot(layer2_output.T, training_output_error)
-            layer3_derivative_of_bias = np.sum(training_output_error, axis=0, keepdims=True)
+            layer2_to_layer3_derivative_of_weights = np.dot(layer2_output.T, layer3_error)
+            layer3_derivative_of_bias = np.sum(layer3_error, axis=0, keepdims=True)
             layer1_to_layer2_derivative_of_weights = np.dot(layer1_output.T, layer2_error)
             layer2_derivative_of_bias = np.sum(layer2_error, axis=0, keepdims=True)
             layer0_to_layer1_derivative_of_weights = np.dot(self.__x_train.T, layer1_error)
             layer1_derivative_of_bias = np.sum(layer1_error, axis=0, keepdims=True)
 
             # Update weights and biases
-            self.__layer0_to_layer1_weights = self.__layer0_to_layer1_weights - self.__learning_rate * layer0_to_layer1_derivative_of_weights
-            self.__layer1_bias = self.__layer1_bias - self.__learning_rate * layer1_derivative_of_bias
-            self.__layer1_to_layer2_weights = self.__layer1_to_layer2_weights - self.__learning_rate * layer1_to_layer2_derivative_of_weights
-            self.__layer2_bias = self.__layer2_bias - self.__learning_rate * layer2_derivative_of_bias
-            self.__layer2_to_layer3_weights = self.__layer2_to_layer3_weights - self.__learning_rate * layer2_to_layer3_derivative_of_weights
-            self.__layer3_bias = self.__layer3_bias - self.__learning_rate * layer3_derivative_of_bias
+            self.__layer0_to_layer1_weights = self.__layer0_to_layer1_weights - (self.__learning_rate * layer0_to_layer1_derivative_of_weights)
+            self.__layer1_bias = self.__layer1_bias - (self.__learning_rate * layer1_derivative_of_bias)
+            self.__layer1_to_layer2_weights = self.__layer1_to_layer2_weights - (self.__learning_rate * layer1_to_layer2_derivative_of_weights)
+            self.__layer2_bias = self.__layer2_bias - (self.__learning_rate * layer2_derivative_of_bias)
+            self.__layer2_to_layer3_weights = self.__layer2_to_layer3_weights - (self.__learning_rate * layer2_to_layer3_derivative_of_weights)
+            self.__layer3_bias = self.__layer3_bias - (self.__learning_rate * layer3_derivative_of_bias)
 
             # Training data metrics
-            training_predictions = np.argmax(training_output, axis=1)  # Predicted classes for training data
-            training_true_labels = np.argmax(training_one_hot_labels, axis=1)  # True classes for training data
+            training_predictions = decode(layer3_output)  # Predicted classes for training data
+            training_true_labels = decode(training_one_hot_labels)  # True classes for training data
             training_accuracy = np.mean(training_predictions == training_true_labels)  # Training accuracy
             self.__training_accuracies.append(training_accuracy)
 
             # Testing data metrics
             _, _, _, _, testing_output = self.__forward(x=self.__x_test)
-            testing_cross_entropy_loss, testing_one_hot_labels = self.__cross_entropy_loss(x=self.__x_test, y=self.__y_test, network_output=testing_output)
+            testing_cross_entropy_loss, testing_one_hot_labels = self.__cross_entropy_loss(x_true=self.__x_test, y_true=self.__y_test, network_output=testing_output)
             self.__testing_losses.append(testing_cross_entropy_loss)
-            testing_predictions = np.argmax(testing_output, axis=1)  # Predicted classes for testing data
-            testing_true_labels = np.argmax(testing_one_hot_labels, axis=1)  # True classes for testing data
+            testing_predictions = decode(testing_output)  # Predicted classes for testing data
+            testing_true_labels = decode(testing_one_hot_labels)  # True classes for testing data
         
             # Calculate testing accuracy
             testing_accuracy = np.mean(testing_predictions == testing_true_labels)
@@ -166,3 +166,7 @@ class NeuralNetwork:
         y_label = "Accuracy"
         self.__plot_internal(mode=training_mode, y=self.__training_accuracies, y_label=y_label)
         self.__plot_internal(mode=testing_mode, y=self.__testing_accuracies, y_label=y_label)
+
+    def predict(self, x: []):
+        _, _, _, _, predicted_output = self.__forward(x=x)
+        return decode(predicted_output)

@@ -147,29 +147,20 @@ class NeuralNetwork:
             if log_derivatives and epoch == self.__num_epochs:
                 task_1_directory = "Task_1"
                 os.makedirs(name=task_1_directory, exist_ok=True)
-                # Bias
-                with open(f"{task_1_directory}/b.csv", 'w') as csv_file:
-                    csv_writer = csv.writer(csv_file)
-                    csv_writer.writerows(self.__layer1_bias)
-                    csv_writer.writerows(self.__layer2_bias)
-                    csv_writer.writerows(self.__layer3_bias)
 
                 # Derivative of bias
-                with open(f"{task_1_directory}/db.csv", 'w') as csv_file:
+                file_name = f"{task_1_directory}/db.csv"
+                print(f"Saving bias derivatives to {file_name}")
+                with open(file_name, 'w') as csv_file:
                     csv_writer = csv.writer(csv_file)
                     csv_writer.writerows(layer1_derivative_of_bias)
                     csv_writer.writerows(layer2_derivative_of_bias)
                     csv_writer.writerows(layer3_derivative_of_bias)
 
-                # Weights
-                with open(f"{task_1_directory}/w.csv", 'w') as csv_file:
-                    csv_writer = csv.writer(csv_file)
-                    csv_writer.writerows(self.__layer0_to_layer1_weights)
-                    csv_writer.writerows(self.__layer1_to_layer2_weights)
-                    csv_writer.writerows(self.__layer2_to_layer3_weights)
-
                 # Derivative of weights
-                with open(f"{task_1_directory}/dw.csv", 'w') as csv_file:
+                file_name = f"{task_1_directory}/dw.csv"
+                print(f"Saving weight derivatives to {file_name}")
+                with open(file_name, 'w') as csv_file:
                     csv_writer = csv.writer(csv_file)
                     csv_writer.writerows(layer0_to_layer1_derivative_of_weights)
                     csv_writer.writerows(layer1_to_layer2_derivative_of_weights)

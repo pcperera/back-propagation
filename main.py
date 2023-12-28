@@ -9,11 +9,12 @@ y_data_point = np.array([3]).reshape(1, -1)
 def task_1():
     print("Running Task_1")
     data_directory = "Task_1_original/a"
-    biases = pd.read_csv(f"{data_directory}/b.csv", header=None)
+    file_suffix = ".csv"  # "-100-40-4.csv"
+    biases = pd.read_csv(f"{data_directory}/b{file_suffix}", header=None)
     biases.drop(biases.columns[0], axis=1, inplace=True)
-    weights = pd.read_csv(f"{data_directory}/w.csv", header=None)
+    weights = pd.read_csv(f"{data_directory}/w{file_suffix}", header=None)
     weights.drop(weights.columns[0], axis=1, inplace=True)
-    nn = NeuralNetwork(x_train=x_data_point, y_train=y_data_point, x_test=None, y_test=None, weights=weights.values, biases=biases.values, num_epochs=1000)
+    nn = NeuralNetwork(x_train=x_data_point, y_train=y_data_point, x_test=None, y_test=None, weights=weights.values, biases=biases.values, num_epochs=1)
     nn.train(log_derivatives=True)
 
 

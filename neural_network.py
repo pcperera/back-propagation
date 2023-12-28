@@ -13,7 +13,7 @@ class NeuralNetwork:
     Architecture: layer0 (input) --> layer1 --> layer2 --> layer3 (output)
     """
 
-    def __init__(self, x_train: [],  y_train: [], x_test: [], y_test: [], learning_rate=0.1, num_epochs=5000):
+    def __init__(self, x_train: [],  y_train: [], x_test: [], y_test: [], learning_rate=0.1, num_epochs=5000, weights=None, biases=None):
         # Initialize data
         self.__x_train = x_train
         self.__y_train = y_train
@@ -32,12 +32,23 @@ class NeuralNetwork:
         self.__num_epochs = num_epochs
 
         # Initialize weights and biases
-        self.__layer0_to_layer1_weights = xavier_initialization(self.__layer0_size, self.__layer1_size)
-        self.__layer1_bias = np.zeros(shape=(1, self.__layer1_size))
-        self.__layer1_to_layer2_weights = xavier_initialization(self.__layer1_size, self.__layer2_size)
-        self.__layer2_bias = np.zeros(shape=(1, self.__layer2_size))
-        self.__layer2_to_layer3_weights = xavier_initialization(self.__layer2_size, self.__layer3_size)
-        self.__layer3_bias = np.zeros(shape=(1, self.__layer3_size))
+        if weights is None:
+            self.__layer0_to_layer1_weights = xavier_initialization(self.__layer0_size, self.__layer1_size)
+            self.__layer1_to_layer2_weights = xavier_initialization(self.__layer1_size, self.__layer2_size)
+            self.__layer2_to_layer3_weights = xavier_initialization(self.__layer2_size, self.__layer3_size)
+        else:
+            self.__layer0_to_layer1_weights = weights[0:14, :100]
+            self.__layer1_to_layer2_weights = weights[14:114, :40]
+            self.__layer2_to_layer3_weights = weights[114:154, :4]
+
+        if biases is None:
+            self.__layer1_bias = np.zeros(shape=(1, self.__layer1_size))
+            self.__layer2_bias = np.zeros(shape=(1, self.__layer2_size))
+            self.__layer3_bias = np.zeros(shape=(1, self.__layer3_size))
+        else:
+            self.__layer1_bias = biases[0:1, :100]
+            self.__layer2_bias = biases[1:2, :40]
+            self.__layer3_bias = biases[2:3, :4]
 
         # Initializes loss array
         self.__training_losses = []
@@ -69,7 +80,7 @@ class NeuralNetwork:
         plt.savefig(file_name)
         plt.close()
 
-    def train(self):
+    def train(self, log_derivatives: bool = False):
         for epoch in range(1, self.__num_epochs + 1):
             # Shuffle training data before each epoch
             training_shuffled_indices = np.random.permutation(len(self.__x_train))
@@ -111,26 +122,29 @@ class NeuralNetwork:
             self.__training_accuracies.append(training_accuracy)
 
             # Testing data metrics
-            testing_shuffled_indices = np.random.permutation(len(self.__x_test))
-            x_test_shuffled = self.__x_test[testing_shuffled_indices]
-            y_test_shuffled = self.__y_test[testing_shuffled_indices]
+            is_test_metrics_enabled = self.__x_test and self.__y_test
+            if is_test_metrics_enabled:
+                testing_shuffled_indices = np.random.permutation(len(self.__x_test))
+                x_test_shuffled = self.__x_test[testing_shuffled_indices]
+                y_test_shuffled = self.__y_test[testing_shuffled_indices]
 
-            _, _, _, _, testing_output = self.__forward(x=x_test_shuffled)
-            y_testing_encoded = one_hot_encode(self.__layer3_size, y_test_shuffled)
-            testing_cross_entropy_loss = cross_entropy_loss(x_true=x_test_shuffled, y_true=y_testing_encoded, y_predicted=testing_output, epsilon=self.__epsilon)
-            self.__testing_losses.append(testing_cross_entropy_loss)
-            testing_predictions = decode(testing_output)  # Predicted classes for testing data
-            testing_true_labels = decode(y_testing_encoded)  # True classes for testing data
-        
-            # Calculate testing accuracy
-            testing_accuracy = np.mean(testing_predictions == testing_true_labels)
-            self.__testing_accuracies.append(testing_accuracy)
+                _, _, _, _, testing_output = self.__forward(x=x_test_shuffled)
+                y_testing_encoded = one_hot_encode(self.__layer3_size, y_test_shuffled)
+                testing_cross_entropy_loss = cross_entropy_loss(x_true=x_test_shuffled, y_true=y_testing_encoded, y_predicted=testing_output, epsilon=self.__epsilon)
+                self.__testing_losses.append(testing_cross_entropy_loss)
+                testing_predictions = decode(testing_output)  # Predicted classes for testing data
+                testing_true_labels = decode(y_testing_encoded)  # True classes for testing data
+
+                # Calculate testing accuracy
+                testing_accuracy = np.mean(testing_predictions == testing_true_labels)
+                self.__testing_accuracies.append(testing_accuracy)
 
             if epoch % 100 == 0:
                 print(f"Epoch {epoch}, Training Cross Entropy Loss: {training_cross_entropy_loss}, Training Accuracy: {training_accuracy}")
-                print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")
+                if is_test_metrics_enabled:
+                    print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")
 
-            if epoch == self.__num_epochs:
+            if log_derivatives and epoch == self.__num_epochs:
                 task_1_directory = "Task_1"
                 os.makedirs(name=task_1_directory, exist_ok=True)
                 # Bias
@@ -141,7 +155,7 @@ class NeuralNetwork:
                     csv_writer.writerows(self.__layer3_bias)
 
                 # Derivative of bias
-                with open(f"{task_1_directory}/db.csv", 'w') as csv_file:
+                with open(f"{task_1_directory}/true-db.csv", 'w') as csv_file:
                     csv_writer = csv.writer(csv_file)
                     csv_writer.writerows(layer1_derivative_of_bias)
                     csv_writer.writerows(layer2_derivative_of_bias)
@@ -155,7 +169,7 @@ class NeuralNetwork:
                     csv_writer.writerows(self.__layer2_to_layer3_weights)
 
                 # Derivative of weights
-                with open(f"{task_1_directory}/dw.csv", 'w') as csv_file:
+                with open(f"{task_1_directory}/true-dw.csv", 'w') as csv_file:
                     csv_writer = csv.writer(csv_file)
                     csv_writer.writerows(layer0_to_layer1_derivative_of_weights)
                     csv_writer.writerows(layer1_to_layer2_derivative_of_weights)
@@ -175,3 +189,4 @@ class NeuralNetwork:
     def predict(self, x: []):
         _, _, _, _, predicted_output = self.__forward(x=x)
         return decode(predicted_output)
+

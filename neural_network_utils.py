@@ -34,7 +34,7 @@ def cross_entropy_loss(x_true: [], y_true: [], y_predicted, epsilon):
 
 
 def xavier_initialization(n_in, n_out):
-    variance = 2.0 / (n_in + n_out)
+    variance = 2.0 / (n_in + n_out) * 10
     stddev = np.sqrt(variance)
     return np.random.randn(n_in, n_out) * stddev
 

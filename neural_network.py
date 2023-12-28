@@ -71,9 +71,14 @@ class NeuralNetwork:
 
     def train(self):
         for epoch in range(1, self.__num_epochs + 1):
-            layer1_input, layer1_output, layer2_input, layer2_output, layer3_output = self.__forward(x=self.__x_train)
-            y_training_encoded = one_hot_encode(self.__layer3_size, self.__y_train)  # Convert Y to one-hot vectors
-            training_cross_entropy_loss = cross_entropy_loss(x_true=self.__x_train, y_true=y_training_encoded, y_predicted=layer3_output, epsilon=self.__epsilon)
+            # Shuffle training data before each epoch
+            training_shuffled_indices = np.random.permutation(len(self.__x_train))
+            x_train_shuffled = self.__x_train[training_shuffled_indices]
+            y_train_shuffled = self.__y_train[training_shuffled_indices]
+
+            layer1_input, layer1_output, layer2_input, layer2_output, layer3_output = self.__forward(x=x_train_shuffled)
+            y_training_encoded = one_hot_encode(self.__layer3_size, y_train_shuffled)  # Convert Y to one-hot vectors
+            training_cross_entropy_loss = cross_entropy_loss(x_true=x_train_shuffled, y_true=y_training_encoded, y_predicted=layer3_output, epsilon=self.__epsilon)
             self.__training_losses.append(training_cross_entropy_loss)
 
             # Backpropagation
@@ -88,7 +93,7 @@ class NeuralNetwork:
             layer3_derivative_of_bias = np.sum(layer3_error, axis=0, keepdims=True)
             layer1_to_layer2_derivative_of_weights = np.dot(layer1_output.T, layer2_error)
             layer2_derivative_of_bias = np.sum(layer2_error, axis=0, keepdims=True)
-            layer0_to_layer1_derivative_of_weights = np.dot(self.__x_train.T, layer1_error)
+            layer0_to_layer1_derivative_of_weights = np.dot(x_train_shuffled.T, layer1_error)
             layer1_derivative_of_bias = np.sum(layer1_error, axis=0, keepdims=True)
 
             # Update weights and biases
@@ -106,9 +111,13 @@ class NeuralNetwork:
             self.__training_accuracies.append(training_accuracy)
 
             # Testing data metrics
-            _, _, _, _, testing_output = self.__forward(x=self.__x_test)
-            y_testing_encoded = one_hot_encode(self.__layer3_size, self.__y_test)
-            testing_cross_entropy_loss = cross_entropy_loss(x_true=self.__x_test, y_true=y_testing_encoded, y_predicted=testing_output, epsilon=self.__epsilon)
+            testing_shuffled_indices = np.random.permutation(len(self.__x_test))
+            x_test_shuffled = self.__x_test[testing_shuffled_indices]
+            y_test_shuffled = self.__y_test[testing_shuffled_indices]
+
+            _, _, _, _, testing_output = self.__forward(x=x_test_shuffled)
+            y_testing_encoded = one_hot_encode(self.__layer3_size, y_test_shuffled)
+            testing_cross_entropy_loss = cross_entropy_loss(x_true=x_test_shuffled, y_true=y_testing_encoded, y_predicted=testing_output, epsilon=self.__epsilon)
             self.__testing_losses.append(testing_cross_entropy_loss)
             testing_predictions = decode(testing_output)  # Predicted classes for testing data
             testing_true_labels = decode(y_testing_encoded)  # True classes for testing data

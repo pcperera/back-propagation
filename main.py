@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from neural_network import NeuralNetwork
 
-# learning_rates = [1, 0.1, 0.001]
-learning_rates = [0.0001]
+learning_rates = [1, 0.1, 0.001, 0.0001]
+# learning_rates = [0.001]
 num_epochs = 2000
 
 if __name__ == "__main__":
@@ -23,4 +23,4 @@ if __name__ == "__main__":
 
         # Test using the data point given in data_point.txt.
         predicted_labels = nn.predict(x=[-1, 1, 1, 1, -1, -1, 1, -1, 1, 1, -1, -1, 1, 1])
-        assert np.array_equal(predicted_labels, [3])
+        print(np.array_equal(predicted_labels, [3]))

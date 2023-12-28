@@ -20,8 +20,7 @@ def task_1():
 
 def task_2():
     print("Running Task_2")
-    # learning_rates = [1, 0.1, 0.001, 0.0001]
-    learning_rates = [0.0001]
+    learning_rates = [1, 0.1, 0.001, 0.0001]
     num_epochs = 2000
 
     data_directory = "Task_2_data"

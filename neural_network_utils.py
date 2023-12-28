@@ -10,9 +10,9 @@ def relu(x):
 
 
 def softmax(x):
-    exponentials = np.exp(x - np.max(x, axis=1, keepdims=True))
-    softmax_output = exponentials / np.sum(exponentials, axis=1, keepdims=True)
-    return one_hot_encode(num_classes=4, labels=np.argmax(softmax_output, axis=1))
+    exponential_scores = np.exp(x - np.max(x, axis=1, keepdims=True))
+    softmax_probabilities = exponential_scores / np.sum(exponential_scores, axis=1, keepdims=True)
+    return one_hot_encode(num_classes=4, labels=np.argmax(softmax_probabilities, axis=1))
 
 
 def one_hot_encode(num_classes, labels: []):

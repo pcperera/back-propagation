@@ -122,7 +122,7 @@ class NeuralNetwork:
             self.__training_accuracies.append(training_accuracy)
 
             # Testing data metrics
-            is_test_metrics_enabled = self.__x_test and self.__y_test
+            is_test_metrics_enabled = self.__x_test is not None and self.__y_test is not None
             if is_test_metrics_enabled:
                 testing_shuffled_indices = np.random.permutation(len(self.__x_test))
                 x_test_shuffled = self.__x_test[testing_shuffled_indices]
@@ -155,7 +155,7 @@ class NeuralNetwork:
                     csv_writer.writerows(self.__layer3_bias)
 
                 # Derivative of bias
-                with open(f"{task_1_directory}/true-db.csv", 'w') as csv_file:
+                with open(f"{task_1_directory}/db.csv", 'w') as csv_file:
                     csv_writer = csv.writer(csv_file)
                     csv_writer.writerows(layer1_derivative_of_bias)
                     csv_writer.writerows(layer2_derivative_of_bias)
@@ -169,7 +169,7 @@ class NeuralNetwork:
                     csv_writer.writerows(self.__layer2_to_layer3_weights)
 
                 # Derivative of weights
-                with open(f"{task_1_directory}/true-dw.csv", 'w') as csv_file:
+                with open(f"{task_1_directory}/dw.csv", 'w') as csv_file:
                     csv_writer = csv.writer(csv_file)
                     csv_writer.writerows(layer0_to_layer1_derivative_of_weights)
                     csv_writer.writerows(layer1_to_layer2_derivative_of_weights)

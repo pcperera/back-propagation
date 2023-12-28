@@ -25,3 +25,9 @@ def one_hot_encode(num_classes, labels: []):
 
 def decode(output):
     return np.argmax(output, axis=1)
+
+
+def cross_entropy_loss(x_true: [], y_true: [], y_predicted, epsilon):
+    # One-hot-encode and calculate loss using cross-entropy loss
+    loss = -np.sum(y_true * np.log(np.clip(y_predicted, epsilon, 1 - epsilon))) / len(x_true)
+    return loss

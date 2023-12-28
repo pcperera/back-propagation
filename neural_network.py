@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from neural_network_utils import relu, softmax, one_hot_encode, decode
+from neural_network_utils import relu, softmax, one_hot_encode, decode, cross_entropy_loss
 
 # Set display precision
 np.set_printoptions(precision=16)
@@ -57,12 +57,6 @@ class NeuralNetwork:
         layer3_output = softmax(layer3_input)
         return layer1_input, layer1_output, layer2_input, layer2_output, layer3_output
 
-    def __cross_entropy_loss(self, x_true: [], y_true: [], network_output):
-        # One-hot-encode and calculate loss using cross-entropy loss
-        one_hot_labels = one_hot_encode(self.__layer3_size, y_true)  # Convert Y to one-hot vectors
-        cross_entropy_loss = -np.sum(one_hot_labels * np.log(network_output + self.__epsilon)) / len(x_true)
-        return cross_entropy_loss, one_hot_labels
-
     def __plot_internal(self, mode: str, y, y_label: str):
         plt.figure(figsize=(20, 8))
         plt.plot(range(self.__num_epochs), y, label=f"{mode} {y_label}")
@@ -78,11 +72,12 @@ class NeuralNetwork:
     def train(self):
         for epoch in range(1, self.__num_epochs + 1):
             layer1_input, layer1_output, layer2_input, layer2_output, layer3_output = self.__forward(x=self.__x_train)
-            training_cross_entropy_loss, training_one_hot_labels = self.__cross_entropy_loss(x_true=self.__x_train, y_true=self.__y_train, network_output=layer3_output)
+            y_training_encoded = one_hot_encode(self.__layer3_size, self.__y_train)  # Convert Y to one-hot vectors
+            training_cross_entropy_loss = cross_entropy_loss(x_true=self.__x_train, y_true=y_training_encoded, y_predicted=layer3_output, epsilon=self.__epsilon)
             self.__training_losses.append(training_cross_entropy_loss)
 
             # Backpropagation
-            layer3_error = layer3_output - training_one_hot_labels
+            layer3_error = layer3_output - y_training_encoded
             layer2_error = np.dot(layer3_error, self.__layer2_to_layer3_weights.T)
             layer2_error[layer2_input <= 0] = 0
             layer1_error = np.dot(layer2_error, self.__layer1_to_layer2_weights.T)
@@ -106,16 +101,17 @@ class NeuralNetwork:
 
             # Training data metrics
             training_predictions = decode(layer3_output)  # Predicted classes for training data
-            training_true_labels = decode(training_one_hot_labels)  # True classes for training data
+            training_true_labels = decode(y_training_encoded)  # True classes for training data
             training_accuracy = np.mean(training_predictions == training_true_labels)  # Training accuracy
             self.__training_accuracies.append(training_accuracy)
 
             # Testing data metrics
             _, _, _, _, testing_output = self.__forward(x=self.__x_test)
-            testing_cross_entropy_loss, testing_one_hot_labels = self.__cross_entropy_loss(x_true=self.__x_test, y_true=self.__y_test, network_output=testing_output)
+            y_testing_encoded = one_hot_encode(self.__layer3_size, self.__y_test)
+            testing_cross_entropy_loss = cross_entropy_loss(x_true=self.__x_test, y_true=y_testing_encoded, y_predicted=testing_output, epsilon=self.__epsilon)
             self.__testing_losses.append(testing_cross_entropy_loss)
             testing_predictions = decode(testing_output)  # Predicted classes for testing data
-            testing_true_labels = decode(testing_one_hot_labels)  # True classes for testing data
+            testing_true_labels = decode(y_testing_encoded)  # True classes for testing data
         
             # Calculate testing accuracy
             testing_accuracy = np.mean(testing_predictions == testing_true_labels)
@@ -125,7 +121,7 @@ class NeuralNetwork:
                 print(f"Epoch {epoch}, Training Cross Entropy Loss: {training_cross_entropy_loss}, Training Accuracy: {training_accuracy}")
                 print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")
 
-            if epoch == self.__num_epochs:
+            if epoch != self.__num_epochs:
                 task_1_directory = "Task_1"
                 os.makedirs(name=task_1_directory, exist_ok=True)
                 # Bias

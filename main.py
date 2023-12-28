@@ -21,6 +21,6 @@ if __name__ == "__main__":
         nn.train()
         nn.plot()
 
-        # Test from the data poit given in data_point.txt.
+        # Test using the data point given in data_point.txt.
         predicted_labels = nn.predict(x=[-1, 1, 1, 1, -1, -1, 1, -1, 1, 1, -1, -1, 1, 1])
         assert np.array_equal(predicted_labels, [3])

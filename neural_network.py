@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from neural_network_utils import relu, softmax, one_hot_encode, decode, cross_entropy_loss
+from neural_network_utils import relu, softmax, one_hot_encode, decode, cross_entropy_loss, xavier_initialization, he_initialization
 
 # Set display precision
 np.set_printoptions(precision=16)
@@ -32,11 +32,11 @@ class NeuralNetwork:
         self.__num_epochs = num_epochs
 
         # Initialize weights and biases
-        self.__layer0_to_layer1_weights = np.random.randn(self.__layer0_size, self.__layer1_size)
+        self.__layer0_to_layer1_weights = xavier_initialization(self.__layer0_size, self.__layer1_size)
         self.__layer1_bias = np.zeros(shape=(1, self.__layer1_size))
-        self.__layer1_to_layer2_weights = np.random.randn(self.__layer1_size, self.__layer2_size)
+        self.__layer1_to_layer2_weights = xavier_initialization(self.__layer1_size, self.__layer2_size)
         self.__layer2_bias = np.zeros(shape=(1, self.__layer2_size))
-        self.__layer2_to_layer3_weights = np.random.randn(self.__layer2_size, self.__layer3_size)
+        self.__layer2_to_layer3_weights = xavier_initialization(self.__layer2_size, self.__layer3_size)
         self.__layer3_bias = np.zeros(shape=(1, self.__layer3_size))
 
         # Initializes loss array
@@ -121,7 +121,7 @@ class NeuralNetwork:
                 print(f"Epoch {epoch}, Training Cross Entropy Loss: {training_cross_entropy_loss}, Training Accuracy: {training_accuracy}")
                 print(f"Epoch {epoch}, Testing Cross Entropy Loss: {testing_cross_entropy_loss}, Testing Accuracy: {testing_accuracy}")
 
-            if epoch != self.__num_epochs:
+            if epoch == self.__num_epochs:
                 task_1_directory = "Task_1"
                 os.makedirs(name=task_1_directory, exist_ok=True)
                 # Bias

@@ -3,8 +3,8 @@ import pandas as pd
 from neural_network import NeuralNetwork
 
 # learning_rates = [1, 0.1, 0.001]
-learning_rates = [0.001]
-num_epochs = 1000
+learning_rates = [0.0001]
+num_epochs = 2000
 
 if __name__ == "__main__":
     data_directory = "Task_2_data"

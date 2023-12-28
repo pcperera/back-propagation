@@ -31,3 +31,15 @@ def cross_entropy_loss(x_true: [], y_true: [], y_predicted, epsilon):
     # One-hot-encode and calculate loss using cross-entropy loss
     loss = -np.sum(y_true * np.log(np.clip(y_predicted, epsilon, 1 - epsilon))) / len(x_true)
     return loss
+
+
+def xavier_initialization(n_in, n_out):
+    variance = 2.0 / (n_in + n_out)
+    stddev = np.sqrt(variance)
+    return np.random.randn(n_in, n_out) * stddev
+
+
+def he_initialization(n_in, n_out):
+    variance = 2.0 / n_in
+    stddev = np.sqrt(variance)
+    return np.random.randn(n_in, n_out) * stddev

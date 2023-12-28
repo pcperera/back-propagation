@@ -25,7 +25,6 @@ class NeuralNetwork:
         self.__layer1_size = 100
         self.__layer2_size = 40
         self.__layer3_size = 4  # Output size
-        self.__epsilon = 1e-64  # For mathematical stability
 
         # Initialize training parameters
         self.__learning_rate = learning_rate
@@ -91,7 +90,7 @@ class NeuralNetwork:
 
             layer1_input, layer1_output, layer2_input, layer2_output, layer3_output = self.__forward(x=x_train_shuffled)
             y_training_encoded = one_hot_encode(self.__layer3_size, y_train_shuffled)  # Convert Y to one-hot vectors
-            training_cross_entropy_loss = cross_entropy_loss(x_true=x_train_shuffled, y_true=y_training_encoded, y_predicted=layer3_output, epsilon=self.__epsilon)
+            training_cross_entropy_loss = cross_entropy_loss(y_true=y_training_encoded, y_predicted=layer3_output)
             self.__training_losses.append(training_cross_entropy_loss)
 
             # Backpropagation
@@ -133,7 +132,7 @@ class NeuralNetwork:
 
                     _, _, _, _, testing_output = self.__forward(x=x_test_shuffled)
                     y_testing_encoded = one_hot_encode(self.__layer3_size, y_test_shuffled)
-                    testing_cross_entropy_loss = cross_entropy_loss(x_true=x_test_shuffled, y_true=y_testing_encoded, y_predicted=testing_output, epsilon=self.__epsilon)
+                    testing_cross_entropy_loss = cross_entropy_loss(y_true=y_testing_encoded, y_predicted=testing_output)
                     self.__testing_losses.append(testing_cross_entropy_loss)
                     testing_predictions = decode(testing_output)  # Predicted classes for testing data
                     testing_true_labels = decode(y_testing_encoded)  # True classes for testing data
